@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  fake-events-api:
+    build: ./server
+    container_name: fake-events-api
+    ports:
+      - "3000:3000"
+    networks:
+      - events-net
+
+  event-sender:
+    build: ./server
+    command: node sendEvents.js
+    depends_on:
+      - fake-events-api
+      - fluent-bit
+    networks:
+      - events-net
+
+  fluent-bit:
+    image: fluent/fluent-bit:1.9
+    container_name: fluent-bit
+    ports:
+      - "9880:9880"
+    volumes:
+      - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf
+      - ./fluent-bit/logs:/fluent-bit/logs  # Save logs here
+    networks:
+      - events-net
+
+networks:
+  events-net:
